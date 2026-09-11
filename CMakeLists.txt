@@ -46,12 +46,17 @@ pico_enable_stdio_usb(pico_MCP4728 1)
 
 # Add the standard library to the build
 target_link_libraries(pico_MCP4728
-        pico_stdlib hardware_i2c )
+        pico_stdlib hardware_i2c hardware_pio)
 
 # Add the standard include files to the build
 target_include_directories(pico_MCP4728 PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
 )
+
+pico_generate_pio_header(pico_MCP4728
+    ${CMAKE_CURRENT_LIST_DIR}/pulse.pio
+)
+
 
 
 pico_add_extra_outputs(pico_MCP4728)

@@ -1,0 +1,7 @@
+.program pulse
+
+.wrap_target
+    pull block     
+    set pins, 1  [9]
+    set pins, 0    
+.wrap
