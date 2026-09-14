@@ -82,22 +82,24 @@ void cmd_help()
 void triggerTms() {
     printf("%c\n", main_commands[trigger].key);
     printf("triggering TMS, press esc to cancel\n");
-    for(int trial_num = 0; trial_num < system_parameters[trials].value; trial_num++) {
-        
-                
-        setPower(system_parameters[low_outp].value);
+    setPower(system_parameters[low_outp].value);
+    for(int trial_num = 0; trial_num < system_parameters[trials].value; trial_num++) {                                
         printf("\n%d:", trial_num);
         int cancel = 0;
         for(int x = 0; x < system_parameters[pulses].value; x++) {
-            trigger_pulse();
-            //pio_sm_put_blocking(pio, sm, 0);
+            //last pulse, do not charge capacitor anymore
+            if(x == system_parameters[pulses].value -1) {
+                setPower(system_parameters[low_outp].value);
+                printf("#");            
+            }
+            trigger_pulse();            
+            //second last pulse, ramp up voltage right after
             if(x == system_parameters[pulses].value -2) {
                 setPower(system_parameters[high_outp].value);
                 printf("*");
-            } else if(x == system_parameters[pulses].value -1) {
-                setPower(system_parameters[low_outp].value);
-                printf("#");            
-            } else {
+            }
+            //none of above, just indicate
+            if(x < system_parameters[pulses].value - 2) {
                 printf(".");
             }
             
