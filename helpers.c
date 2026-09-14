@@ -8,12 +8,41 @@
 #include "pulse.pio.h"
 
 #include "helpers.h"
+#include "string.h"
 
-#define PULSE_PIN 16
+
 
 static PIO pio = pio0;
 static uint sm;
 static uint offset;
+
+
+#include "hardware/flash.h"
+#include "hardware/sync.h"
+
+#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
+
+void save_values(const uint8_t* system_values, size_t size)
+{    
+    uint32_t interrupts = save_and_disable_interrupts();
+
+    flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
+    flash_range_program(
+        FLASH_TARGET_OFFSET,
+        system_values,
+        size
+    );
+
+    restore_interrupts(interrupts);
+}
+
+void load_values(int* system_values, size_t size)
+{    
+    const uint8_t *data =
+        (const uint8_t *)(XIP_BASE + FLASH_TARGET_OFFSET);
+
+    memcpy(system_values, data, size);
+}
 
 bool reserved_addr(uint8_t addr) {
     return (addr & 0x78) == 0 || (addr & 0x78) == 0x78;
@@ -47,7 +76,6 @@ void scan_test() {
 }
 
 int initi2c() { 
-    //printf("initi2c\n");
     i2c_init(I2C_PORT, 100*1000);
     
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
@@ -55,10 +83,6 @@ int initi2c() {
     gpio_pull_up(I2C_SDA);
     gpio_pull_up(I2C_SCL);
 
-    //scan_test();
-    // while(1) {
-    //   sleep_ms(1000);
-    // }
     return 0;
 }
 

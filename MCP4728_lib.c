@@ -4,28 +4,7 @@
 #include "hardware/i2c.h"
 #include "MCP4728_lib.h"
 
-/**
- * @brief Sets the input register for a given channel to the specified settings
- *
- * @param channel The channel to update
- * @param new_value The new value to assign
- * @param new_vref Optional vref setting - Defaults to `MCP4728_VREF_VDD`
- * @param new_gain Optional gain setting - Defaults to `MCP4728_GAIN_1X`
- * @param new_pd_mode Optional power down mode setting - Defaults to
- * `MCP4728_PD_MOOE_NORMAL`
- * @param udac Optional UDAC setting - Defaults to `false`, latching
- * immediately. Set to `true` to latch when the LDAC pin is pulled low
- *
- * @return true if the write was successful
- * @return false if there was an error with I2C communication between the MCU
- * and the DAC
- */
-
-
-
-
-int setChannelValue(
-    MCP4728_channel_t channel, uint16_t new_value, MCP4728_vref_t new_vref,
+int setChannelValue(MCP4728_channel_t channel, uint16_t new_value, MCP4728_vref_t new_vref,
     MCP4728_gain_t new_gain, MCP4728_pd_mode_t new_pd_mode, bool udac) {
 
     uint8_t output_buffer[3];
@@ -47,18 +26,7 @@ int setChannelValue(
 
     return i2c_write_blocking(I2C_PORT, MCP4728_I2CADDR, output_buffer, 3, false);    
 }
-/**
- * @brief Set the values of all four channels simultaneously with minimal delay
- * or configuration
- *
- * @param channel_a_value The value to assign to channel A
- * @param channel_b_value The value to assign to channel B
- * @param channel_c_value The value to assign to channel C
- * @param channel_d_value The value to assign to channel D
- * @return true if the write was successful
- * @return false if there was an error with I2C communication between the MCU
- * and the DAC
- */
+
 int fastWrite(uint16_t channel_a_value,
                                  uint16_t channel_b_value,
                                  uint16_t channel_c_value,

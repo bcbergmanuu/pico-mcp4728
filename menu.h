@@ -2,20 +2,12 @@
 #ifndef _menu_h
 #define _menu_h
 
-
-typedef struct {
-    const char key;
-    const char *description;
+typedef const struct {
+    char key;
+    char *description;
     void (*handler)();
 } Command;
 
-typedef struct {
-    const char desc[40];
-    const char unit[4];
-    int value;
-    const int min;
-    const int max;    
-} system_parameter; 
 
 
 enum menu {
@@ -26,16 +18,24 @@ enum menu {
     menu_item_count,
 };
 
-
-enum system_desc {
+typedef enum {
     pulses,
     period,
     interval,
     trials,
     low_outp,
     high_outp,
-    paramter_amount
-};
+    paramter_amount,
+} system_desc;
+
+typedef const struct {
+    system_desc id;
+    char *desc;
+    char *unit;  
+    int min;
+    int max;    
+} system_parameter; 
+
 
 void run_menu();
 void cmd_help();

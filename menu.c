@@ -4,6 +4,8 @@
 #include "menu.h"
 #include "helpers.h"
 
+int system_values[paramter_amount] = {20, 50, 500, 4, 100, 1000};
+
 Command main_commands[menu_item_count] = {
     {'h',  "Show Command List",        cmd_help},
    // {'c',  "show i2c address", scan_test},
@@ -15,13 +17,15 @@ Command main_commands[menu_item_count] = {
 };
 
 system_parameter system_parameters[paramter_amount] = {
-    {"number of pulses per trial", "", 20, 2, 10000},
-    {"period","ms", 50, 10, 10000},
-    {"intertrial interval", "ms", 500,0, 10000},
-    {"number of trials", "", 4, 1, 100},
-    {"base system output", "V", 100, 10, 2000},
-    {"high system output", "V", 1000, 10, 2000}
+    {pulses, "number of pulses per trial", "", 2, 10000},
+    {period, "period","ms", 10, 10000},
+    {interval, "intertrial interval", "ms" ,0, 10000},
+    {trials, "number of trials", "", 1, 100},
+    {low_outp, "base system output", "V", 10, 2000},
+    {high_outp, "high system output", "V", 10, 2000}
 };
+
+
 
 int set_systemparameter(system_parameter *param) {
     while (true) {                              
@@ -30,21 +34,22 @@ int set_systemparameter(system_parameter *param) {
             printf(" [%s]", param->unit);
         }
         int tempvalue = 0;
-        printf(" (%d): ",param->value);        
+        printf(" (%d): ", system_values[param->id]);        
         int err = input_number(&tempvalue);
         if(err < 0) return err;     
         if(err > 0 && tempvalue >= param->min && tempvalue <= param->max) {
-            param->value = tempvalue;
+            system_values[param->id] = tempvalue;
             return 0;
         } 
         printf("\n\t!Value should be within %d and %d %s", param->min, param->max, param->unit);
-    }        
+    }   
+    
 }
 
 void cmd_showparameters() {
     printf("%c\n", main_commands[show].key);
     for(int x =0; x< paramter_amount; x++ ){
-        printf("%30s: %d %s\n", system_parameters[x].desc, system_parameters[x].value, system_parameters[x].unit);
+        printf("%30s: %d %s\n", system_parameters[x].desc, system_values[x], system_parameters[x].unit);
     }
 }
 
@@ -57,11 +62,12 @@ void cmd_setparameters() {
         if(err == -27) 
         {
             printf("\n\n");
-            return;
+            break;
         } else if (err == -13) {
             printf("no change");
         }
-    }       
+    } 
+    save_values((const uint8_t*)system_values, sizeof(system_values));      
 }
 
 
@@ -82,35 +88,35 @@ void cmd_help()
 void triggerTms() {
     printf("%c\n", main_commands[trigger].key);
     printf("triggering TMS, press esc to cancel\n");
-    setPower(system_parameters[low_outp].value);
-    for(int trial_num = 0; trial_num < system_parameters[trials].value; trial_num++) {                                
+    setPower(system_values[low_outp]);
+    for(int trial_num = 0; trial_num < system_values[trials]; trial_num++) {                                
         printf("\n%d:", trial_num);
         int cancel = 0;
-        for(int x = 0; x < system_parameters[pulses].value; x++) {
+        for(int x = 0; x < system_values[pulses]; x++) {
             //last pulse, do not charge capacitor anymore
-            if(x == system_parameters[pulses].value -1) {
-                setPower(system_parameters[low_outp].value);
+            if(x == system_values[pulses] -1) {
+                setPower(system_values[low_outp]);
                 printf("#");            
             }
             trigger_pulse();            
             //second last pulse, ramp up voltage right after
-            if(x == system_parameters[pulses].value -2) {
-                setPower(system_parameters[high_outp].value);
+            if(x == system_values[pulses] -2) {
+                setPower(system_values[high_outp]);
                 printf("*");
             }
             //none of above, just indicate
-            if(x < system_parameters[pulses].value - 2) {
+            if(x < system_values[pulses] - 2) {
                 printf(".");
             }
             
-            cancel = getchar_timeout_us(system_parameters[period].value * 1000) ;
+            cancel = getchar_timeout_us(system_values[period] * 1000) ;
             if(cancel != PICO_ERROR_TIMEOUT) {
                 printf("\nexecution cancelled during trial %d\n", cancel);
                 return;                        
             }
         }
         
-        cancel = getchar_timeout_us(system_parameters[interval].value * 1000);            
+        cancel = getchar_timeout_us(system_values[interval] * 1000);            
         if(cancel != PICO_ERROR_TIMEOUT) {
             printf("\nexecution cancelled during interval %d\n", cancel);
             return;
@@ -122,6 +128,7 @@ void triggerTms() {
 
 
 void run_menu() {
+    load_values(system_values, sizeof(system_values));
     cmd_help();
     int command = 0;
     printf("\n\n> ");
